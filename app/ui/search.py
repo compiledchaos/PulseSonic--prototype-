@@ -1,6 +1,13 @@
 from PySide6.QtCore import Qt, QRect, QCoreApplication
 from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QWidget, QLineEdit, QPushButton, QListWidget, QListWidgetItem, QLabel
+from PySide6.QtWidgets import (
+    QWidget,
+    QLineEdit,
+    QPushButton,
+    QListWidget,
+    QListWidgetItem,
+    QLabel,
+)
 
 
 class SearchView(QWidget):
@@ -32,9 +39,6 @@ class SearchView(QWidget):
 
         # Search results list
         self.search_results = QListWidget(self)
-        QListWidgetItem(self.search_results)
-        QListWidgetItem(self.search_results)
-        QListWidgetItem(self.search_results)
         self.search_results.setObjectName("search_results")
         self.search_results.setGeometry(QRect(75, 140, 441, 291))
         font3 = QFont()
@@ -61,14 +65,4 @@ class SearchView(QWidget):
 
         __sortingEnabled = self.search_results.isSortingEnabled()
         self.search_results.setSortingEnabled(False)
-        if self.search_results.count() >= 3:
-            self.search_results.item(0).setText(
-                QCoreApplication.translate("mainWindow", "test item-1", None)
-            )
-            self.search_results.item(1).setText(
-                QCoreApplication.translate("mainWindow", "test item-2", None)
-            )
-            self.search_results.item(2).setText(
-                QCoreApplication.translate("mainWindow", "test item-3", None)
-            )
         self.search_results.setSortingEnabled(__sortingEnabled)

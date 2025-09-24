@@ -1,18 +1,32 @@
 from .main_window_ui import Ui_mainWindow
 from PySide6.QtWidgets import QMainWindow
+from app.services.jamendo_api import JamendoApi
+from PySide6.QtWidgets import QListWidgetItem
+from PySide6.QtCore import Qt
 
 
 class AppMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.ui = Ui_mainWindow()
+        self.jamendo_api = JamendoApi()
         self.ui.setupUi(self)
-        self.ui.search_view.search_results.itemClicked.connect(self.set_cover_url)
 
-    def set_cover_url(
-        self,
-        url="https://usercontent.jamendo.com?type=album&id=529594&width=300&trackid=2058127",
-    ):
-        self.ui.playing_view.set_cover_url(
-            "https://usercontent.jamendo.com?type=album&id=529594&width=300&trackid=2058127"
-        )
+        self.ui.search_view.search_b.clicked.connect(self.search)
+        self.ui.search_view.search_results.itemClicked.connect(self.setup_playback)
+
+    def search(self):
+        self.jamendo_api.namesearch = self.ui.search_view.search_bar.text()
+        self.ui.search_view.search_results.clear()
+        for x, y in self.jamendo_api.get_track_list().items():
+            item = QListWidgetItem(y)
+            item.setData(Qt.UserRole, x)
+            self.ui.search_view.search_results.addItem(item)
+        self.ui.search_view.retranslateUi()
+
+    def setup_playback(self, item):
+        self.jamendo_api.track_id = item.data(Qt.UserRole)
+        self.ui.playing_view.set_cover_url(self.jamendo_api.get_track_cover())
+        self.ui.playing_view.track_name.setText(self.jamendo_api.get_track_name())
+        self.ui.playing_view.artist_name.setText(self.jamendo_api.get_track_artist())
+        self.ui.playing_view.progressBar.setValue(0)

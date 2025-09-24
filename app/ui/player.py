@@ -79,11 +79,11 @@ class PlayerView(QWidget):
 
         # Pause and Play buttons
         self.pause = QPushButton(self)
-        self.pause.setObjectName("pause")
+        self.pause.setObjectName("play")
         self.pause.setGeometry(QRect(483, 210, 80, 25))
 
         self.play = QPushButton(self)
-        self.play.setObjectName("play")
+        self.play.setObjectName("pause")
         self.play.setGeometry(QRect(37, 210, 79, 24))
 
     def set_cover_url(self, url: str):
@@ -118,8 +118,8 @@ class PlayerView(QWidget):
 
     def retranslateUi(self):
         self.track_name.setText(QCoreApplication.translate("mainWindow", "Track", None))
-        self.pause.setText(QCoreApplication.translate("mainWindow", "Pause", None))
-        self.play.setText(QCoreApplication.translate("mainWindow", "Play", None))
+        self.pause.setText(QCoreApplication.translate("mainWindow", "Play", None))
+        self.play.setText(QCoreApplication.translate("mainWindow", "Pause", None))
         self.artist_name.setText(
             QCoreApplication.translate("mainWindow", "Artist Name", None)
         )
