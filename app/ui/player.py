@@ -1,6 +1,7 @@
 from PySide6.QtCore import Qt, QRect, QCoreApplication
-from PySide6.QtGui import QFont, QPalette, QBrush, QColor
-from PySide6.QtWidgets import QWidget, QLabel, QFrame, QPushButton, QProgressBar
+from PySide6.QtGui import QFont, QPalette, QBrush, QColor, QPixmap, QImage
+from PySide6.QtWidgets import QWidget, QLabel, QPushButton, QProgressBar
+import requests
 
 
 class PlayerView(QWidget):
@@ -27,17 +28,20 @@ class PlayerView(QWidget):
         self.track_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Cover art frame
-        self.cover_art = QFrame(self)
-        self.cover_art.setObjectName("cover_art")
-        self.cover_art.setGeometry(QRect(150, 60, 300, 300))
-        palette = QPalette()
-        brush = QBrush(QColor(0, 0, 127, 255))
-        brush.setStyle(Qt.BrushStyle.SolidPattern)
-        palette.setBrush(QPalette.ColorGroup.Active, QPalette.ColorRole.Base, brush)
-        palette.setBrush(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Base, brush)
-        self.cover_art.setPalette(palette)
-        self.cover_art.setFrameShape(QFrame.Shape.StyledPanel)
-        self.cover_art.setFrameShadow(QFrame.Shadow.Raised)
+
+        # Load cover art from file
+        try:
+            response = requests.get(
+                "https://usercontent.jamendo.com?type=album&id=529594&width=300&trackid=2058127"
+            )
+            self.cover_art = QLabel(self)
+            img = QImage()
+            img.loadFromData(response.content)
+            self.cover_art.setGeometry(QRect(150, 60, 300, 300))
+            self.cover_art.setPixmap(QPixmap.fromImage(img))
+            self.cover_art.show()
+        except Exception as e:
+            print(e)
 
         # Progress bar
         self.progressBar = QProgressBar(self)
