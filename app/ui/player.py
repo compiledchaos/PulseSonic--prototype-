@@ -12,6 +12,7 @@ class PlayerView(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.url = ""
         self.setObjectName("playing_view")
         self.setEnabled(True)
         self.setAutoFillBackground(True)
@@ -28,20 +29,16 @@ class PlayerView(QWidget):
         self.track_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Cover art frame
+        self.cover_art = QLabel(self)
+        self.cover_art.setObjectName("cover_art")
+        self.cover_art.setGeometry(QRect(150, 60, 300, 300))
+        self.cover_art.setScaledContents(True)
+        self.cover_art.hide()
 
-        # Load cover art from file
-        try:
-            response = requests.get(
-                "https://usercontent.jamendo.com?type=album&id=529594&width=300&trackid=2058127"
-            )
-            self.cover_art = QLabel(self)
-            img = QImage()
-            img.loadFromData(response.content)
-            self.cover_art.setGeometry(QRect(150, 60, 300, 300))
-            self.cover_art.setPixmap(QPixmap.fromImage(img))
-            self.cover_art.show()
-        except Exception as e:
-            print(e)
+        # Load cover art if URL was preset
+
+        if self.url:
+            self.set_cover_url(self.url)
 
         # Progress bar
         self.progressBar = QProgressBar(self)
@@ -88,6 +85,36 @@ class PlayerView(QWidget):
         self.play = QPushButton(self)
         self.play.setObjectName("play")
         self.play.setGeometry(QRect(37, 210, 79, 24))
+
+    def set_cover_url(self, url: str):
+        """
+        Set or update the cover art from an image URL.
+
+        Args:
+            url: Direct URL to the image to display.
+        """
+        self.url = url or ""
+        if not self.url:
+            self.cover_art.clear()
+            self.cover_art.hide()
+            return
+
+        try:
+            response = requests.get(self.url, timeout=10)
+            response.raise_for_status()
+            img = QImage()
+            img.loadFromData(response.content)
+            if img.isNull():
+                # Failed to decode
+                self.cover_art.clear()
+                self.cover_art.hide()
+                return
+            self.cover_art.setPixmap(QPixmap.fromImage(img))
+            self.cover_art.show()
+        except Exception:
+            # Network or decoding error; hide the image
+            self.cover_art.clear()
+            self.cover_art.hide()
 
     def retranslateUi(self):
         self.track_name.setText(QCoreApplication.translate("mainWindow", "Track", None))
