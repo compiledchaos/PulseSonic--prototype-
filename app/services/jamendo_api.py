@@ -20,7 +20,7 @@ class JamendoApi:
 
         try:
             r = requests.get(
-                f"https://api.jamendo.com/v3.0/tracks/?client_id={self.client_id}&format=jsonpretty&limit={self.limit}&namesearch={self.namesearch}&",
+                f"https://api.jamendo.com/v3.0/tracks/?client_id={self.client_id}&format=jsonpretty&limit={self.limit}&name={self.namesearch}&",
             )
             track_list = {}
             for x in range(0, len(r.json()["results"])):

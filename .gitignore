@@ -4,3 +4,4 @@ __pycache__/
 jamendo.json
 .env
 logs/
+app/temp_storage/

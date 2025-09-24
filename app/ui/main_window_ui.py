@@ -113,6 +113,7 @@ class Ui_mainWindow(object):
         self.recs_button.setGeometry(QRect(343, 0, 250, 50))
         self.recs_button.setFont(button_font)
         self.recs_button.setAutoFillBackground(False)
+        self.recs_button.setEnabled(False)
 
         # Instantiate modular subviews
         self.search_view = SearchView(self.centralwidget)
@@ -161,7 +162,7 @@ class Ui_mainWindow(object):
             QCoreApplication.translate("mainWindow", "MainWindow", None)
         )
         self.app_name.setText(
-            QCoreApplication.translate("mainWindow", "PulseSonic", None)
+            QCoreApplication.translate("mainWindow", "PulseSonic - Prototype", None)
         )
         self.search_button.setText(
             QCoreApplication.translate("mainWindow", "Search", None)
