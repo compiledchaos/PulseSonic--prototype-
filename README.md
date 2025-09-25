@@ -1,4 +1,4 @@
-# PulseSonic-Py 🎵  
+# PulseSonic-(prototype) 🎵  
 Python-only prototype for PulseSonic.  
 Built with PySide6 UI + Jamendo API backend.
 
@@ -21,8 +21,8 @@ Built with PySide6 UI + Jamendo API backend.
 
 ## Getting Started
 ```bash
-git clone https://github.com/yourusername/pulsesonic-py
-cd pulsesonic-py
+git clone https://github.com/yourusername/pulsesonic-(prototype)
+cd pulsesonic-(prototype)
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
