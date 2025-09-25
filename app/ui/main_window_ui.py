@@ -24,13 +24,17 @@ from PySide6.QtWidgets import (
 
 # Import modular subviews
 try:
-    from .search import SearchView
-    from .player import PlayerView
-    from .recs import RecsView
+    from .main_views import SearchView
+    from .main_views import PlayerView
+    from .main_views import RecsView
+    from .login_and_signup import Login
+    from .login_and_signup import Signup
 except Exception:
-    from app.ui.search import SearchView
-    from app.ui.player import PlayerView
-    from app.ui.recs import RecsView
+    from app.ui.main_views.search import SearchView
+    from app.ui.main_views.player import PlayerView
+    from app.ui.main_views.recs import RecsView
+    from app.ui.login_and_signup.login import Login
+    from app.ui.login_and_signup.signup import Signup
 
 
 class Ui_mainWindow(object):
@@ -124,6 +128,20 @@ class Ui_mainWindow(object):
 
         self.recs_view = RecsView(self.centralwidget)
         self.recs_view.setGeometry(QRect(0, 110, 591, 431))
+
+        self.login_view = Login(self.centralwidget)
+        self.login_view.show()
+
+        self.signup_view = Signup(self.centralwidget)
+        self.signup_view.hide()
+
+        # Receive login/signup success signal
+        try:
+            self.login_view.login_success.connect(self._on_login_success)
+            self.signup_view.signup_success.connect(self._on_login_success)
+        except Exception:
+            pass
+
         # Default visibility: show search, hide others
         self.search_view.show()
         self.playing_view.hide()
@@ -134,6 +152,8 @@ class Ui_mainWindow(object):
         self.search_view.raise_()
         self.app_name.raise_()
         self.three_funcs.raise_()
+        self.login_view.raise_()
+        self.signup_view.raise_()
         self.menubar = QMenuBar(mainWindow)
         self.menubar.setObjectName("menubar")
         self.menubar.setGeometry(QRect(0, 0, 600, 33))
@@ -152,6 +172,8 @@ class Ui_mainWindow(object):
         self.recs_button.clicked.connect(self.recs_view.show)
         self.recs_button.clicked.connect(self.playing_view.hide)
         self.recs_button.clicked.connect(self.search_view.hide)
+
+        self.login_view.redirect_to_signup.connect(self.signup_view.show)
 
         QMetaObject.connectSlotsByName(mainWindow)
 
@@ -179,3 +201,24 @@ class Ui_mainWindow(object):
         self.recs_view.retranslateUi()
 
     # retranslateUi
+
+    def _on_login_success(self, username: str, password: str):
+        """Handle successful login from the Login view."""
+        # Hide the login overlay
+        try:
+            self.login_view.hide()
+            self.signup_view.hide()
+        except Exception:
+            pass
+        # Enable recommendations button now that user is logged in
+        try:
+            # self.recs_button.setEnabled(True)
+            pass
+        except Exception:
+            pass
+        # Show a transient status message
+        try:
+            if hasattr(self, "statusbar") and self.statusbar is not None:
+                self.statusbar.showMessage(f"Logged in as {username}", 5000)
+        except Exception:
+            pass
