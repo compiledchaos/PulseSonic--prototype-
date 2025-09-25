@@ -1,50 +1,57 @@
 from app.utils.logger import get_logger
-import pygame
-import requests
-import os
+import vlc
+import threading
 
 logger = get_logger(__name__)
 
 
 class Playback:
     def __init__(self):
-        logger.info("Initializing mixer")
-        pygame.mixer.init()
+        logger.info("Initializing VLC player")
+        self.player = None
+        self.lock = threading.Lock()  # ensure thread-safety
 
     def play(self, track_url: str):
-        logger.info("Playing track")
+        logger.info(f"Preparing to play track: {track_url}")
 
-        track = requests.get(track_url)
+        def _play():
+            try:
+                with self.lock:
+                    if self.player is not None:
+                        self.player.stop()
 
-        with open("app/temp_storage/track.mp3", "wb") as f:
-            f.write(track.content)
+                    # Create new VLC media player
+                    instance = vlc.Instance()
+                    media = instance.media_new(track_url)
+                    self.player = instance.media_player_new()
+                    self.player.set_media(media)
 
-        try:
-            logger.info("Loading track")
+                    # Set volume (0–100)
+                    self.player.audio_set_volume(50)
 
-            # Set the volume
-            pygame.mixer.music.set_volume(0.5)
+                    # Play
+                    logger.info("Starting playback with VLC")
+                    self.player.play()
+            except Exception as e:
+                logger.error(f"Error playing track: {e}")
 
-            # Load an MP3 or WAV
-            pygame.mixer.music.load("app/temp_storage/track.mp3")
-
-            # Play it
-            logger.info("Playing track")
-            pygame.mixer.music.play()
-        except Exception as e:
-            logger.error(f"Error playing track: {e}")
+        threading.Thread(target=_play, daemon=True).start()
 
     def pause(self):
-        logger.info("Pausing track")
-        pygame.mixer.music.pause()
+        with self.lock:
+            if self.player is not None:
+                logger.info("Pausing track")
+                self.player.pause()
 
     def resume(self):
-        logger.info("Resuming track")
-        pygame.mixer.music.unpause()
+        with self.lock:
+            if self.player is not None:
+                logger.info("Resuming track")
+                self.player.pause()  # VLC toggle pause
 
     def stop(self):
-        logger.info("Stopping track")
-        pygame.mixer.music.stop()
-        pygame.mixer.music.unload()
-        os.remove("app/temp_storage/track.mp3")
-        logger.info("Track stopped")
+        with self.lock:
+            if self.player is not None:
+                logger.info("Stopping track")
+                self.player.stop()
+                self.player = None

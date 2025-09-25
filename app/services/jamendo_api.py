@@ -1,10 +1,11 @@
-import requests
 import dotenv
 import os
+import aiohttp
+import asyncio
+import threading
 from app.utils.logger import get_logger
 
 dotenv.load_dotenv()
-
 logger = get_logger(__name__)
 
 
@@ -14,89 +15,80 @@ class JamendoApi:
         self.namesearch = ""
         self.track_id = ""
         self.limit = 5
+        self.track_info = None
 
-    def get_track_list(self):
-        logger.info("Getting track list")
-
+    # ---------------------------
+    # Async API calls (internal)
+    # ---------------------------
+    async def _fetch(self, url: str):
         try:
-            r = requests.get(
-                f"https://api.jamendo.com/v3.0/tracks/?client_id={self.client_id}&format=jsonpretty&limit={self.limit}&name={self.namesearch}&",
-            )
-            track_list = {}
-            for x in range(0, len(r.json()["results"])):
-                track_list[r.json()["results"][x]["id"]] = r.json()["results"][x][
-                    "name"
-                ]
-            return track_list
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    return await response.json()
         except Exception as e:
-            logger.error(f"Error getting track list: {e}")
+            logger.error(f"Error fetching {url}: {e}")
             return None
 
-    def get_track(self):
-        logger.info("Getting track")
+    async def get_track_list_async(self):
+        url = (
+            f"https://api.jamendo.com/v3.0/tracks/"
+            f"?client_id={self.client_id}&format=jsonpretty&limit={self.limit}&search={self.namesearch}"
+        )
+        data = await self._fetch(url)
+        if not data:
+            return None
 
-        try:
-            r = requests.get(
-                f"https://api.jamendo.com/v3.0/tracks/?client_id={self.client_id}&format=jsonpretty&id={self.track_id}&",
-            )
+        track_list = {t["id"]: t["name"] for t in data.get("results", [])}
+        return track_list
 
+    async def get_track_info_async(self):
+        url = (
+            f"https://api.jamendo.com/v3.0/tracks/"
+            f"?client_id={self.client_id}&format=jsonpretty&id={self.track_id}"
+        )
+        data = await self._fetch(url)
+        self.track_info = data["results"][0]
+        return self.track_info
+
+    # ---------------------------
+    # Threaded wrappers (safe for UI use)
+    # ---------------------------
+    def run_in_thread(self, coro, callback=None):
+        """Run an async coroutine in a thread and call back with result."""
+
+        def runner():
             try:
-                return r.json()["results"][0]["audio"]
+                result = asyncio.run(coro)
+                if callback:
+                    callback(result)
             except Exception as e:
-                logger.error(f"Error getting track: {e}")
-                return None
+                logger.error(f"Threaded API call failed: {e}")
 
-        except Exception as e:
-            logger.error(f"Error getting track: {e}")
-            return None
+        threading.Thread(target=runner, daemon=True).start()
 
-    def get_track_cover(self):
-        logger.info("Getting track cover")
+    def get_track_list(self, callback=None):
+        """Non-blocking wrapper for get_track_list_async"""
+        self.run_in_thread(self.get_track_list_async(), callback)
 
-        try:
-            r = requests.get(
-                f"https://api.jamendo.com/v3.0/tracks/?client_id={self.client_id}&format=jsonpretty&id={self.track_id}&",
-            )
+    def get_track_info(self, callback=None):
+        """Non-blocking wrapper for get_track_info_async"""
+        self.run_in_thread(self.get_track_info_async(), callback)
 
-            try:
-                return r.json()["results"][0]["album_image"]
-            except Exception as e:
-                logger.error(f"Error getting track cover: {e}")
-                return None
-        except Exception as e:
-            logger.error(f"Error getting track cover: {e}")
-            return None
+    # ---------------------------
+    # Accessors for track_info
+    # ---------------------------
+    async def get_track(self):
+        await self.get_track_info_async()
+        return self.track_info.get("audio") if self.track_info else None
 
-    def get_track_artist(self):
-        logger.info("Getting track artist")
+    async def get_track_cover(self):
+        await self.get_track_info_async()
+        return self.track_info.get("album_image") if self.track_info else None
 
-        try:
-            r = requests.get(
-                f"https://api.jamendo.com/v3.0/tracks/?client_id={self.client_id}&format=jsonpretty&id={self.track_id}&",
-            )
+    async def get_track_artist(self):
+        await self.get_track_info_async()
+        return self.track_info.get("artist_name") if self.track_info else None
 
-            try:
-                return r.json()["results"][0]["artist_name"]
-            except Exception as e:
-                logger.error(f"Error getting track artist: {e}")
-                return None
-        except Exception as e:
-            logger.error(f"Error getting track artist: {e}")
-            return None
-
-    def get_track_name(self):
-        logger.info("Getting track name")
-
-        try:
-            r = requests.get(
-                f"https://api.jamendo.com/v3.0/tracks/?client_id={self.client_id}&format=jsonpretty&id={self.track_id}&",
-            )
-
-            try:
-                return r.json()["results"][0]["name"]
-            except Exception as e:
-                logger.error(f"Error getting track name: {e}")
-                return None
-        except Exception as e:
-            logger.error(f"Error getting track name: {e}")
-            return None
+    async def get_track_name(self):
+        await self.get_track_info_async()
+        return self.track_info.get("name") if self.track_info else None
