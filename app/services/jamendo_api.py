@@ -14,7 +14,7 @@ class JamendoApi:
         self.client_id = os.getenv("JAMENDO_CLIENT_ID")
         self.namesearch = ""
         self.track_id = ""
-        self.limit = 5
+        self.limit = 20
         self.track_info = None
 
     # ---------------------------
@@ -47,7 +47,11 @@ class JamendoApi:
             f"?client_id={self.client_id}&format=jsonpretty&id={self.track_id}"
         )
         data = await self._fetch(url)
-        self.track_info = data["results"][0]
+        try:
+            results = (data or {}).get("results", [])
+            self.track_info = results[0] if results else None
+        except Exception:
+            self.track_info = None
         return self.track_info
 
     # ---------------------------
@@ -75,20 +79,16 @@ class JamendoApi:
         self.run_in_thread(self.get_track_info_async(), callback)
 
     # ---------------------------
-    # Accessors for track_info
+    # Accessors for track_info (synchronous getters)
     # ---------------------------
-    async def get_track(self):
-        await self.get_track_info_async()
-        return self.track_info.get("audio") if self.track_info else None
+    def get_track(self):
+        return (self.track_info or {}).get("audio") if self.track_info else None
 
-    async def get_track_cover(self):
-        await self.get_track_info_async()
-        return self.track_info.get("album_image") if self.track_info else None
+    def get_track_cover(self):
+        return (self.track_info or {}).get("album_image") if self.track_info else None
 
-    async def get_track_artist(self):
-        await self.get_track_info_async()
-        return self.track_info.get("artist_name") if self.track_info else None
+    def get_track_artist(self):
+        return (self.track_info or {}).get("artist_name") if self.track_info else None
 
-    async def get_track_name(self):
-        await self.get_track_info_async()
-        return self.track_info.get("name") if self.track_info else None
+    def get_track_name(self):
+        return (self.track_info or {}).get("name") if self.track_info else None

@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt, QRect, QCoreApplication
 from PySide6.QtGui import QFont, QPalette, QBrush, QColor, QPixmap, QImage
-from PySide6.QtWidgets import QWidget, QLabel, QPushButton, QProgressBar
+from PySide6.QtWidgets import QWidget, QLabel, QPushButton, QProgressBar, QSlider
 import requests
 
 
@@ -80,11 +80,27 @@ class PlayerView(QWidget):
         # Pause and Play buttons
         self.pause = QPushButton(self)
         self.pause.setObjectName("play")
-        self.pause.setGeometry(QRect(483, 210, 80, 25))
+        self.pause.setGeometry(QRect(37, 225, 80, 25))
 
         self.play = QPushButton(self)
         self.play.setObjectName("pause")
-        self.play.setGeometry(QRect(37, 210, 79, 24))
+        self.play.setGeometry(QRect(37, 195, 80, 25))
+
+        self.forward = QPushButton(self)
+        self.forward.setObjectName("forward")
+        self.forward.setGeometry(QRect(37, 165, 80, 25))
+
+        self.backward = QPushButton(self)
+        self.backward.setObjectName("backward")
+        self.backward.setGeometry(QRect(37, 255, 80, 25))
+
+        # Volume slider
+        self.volume = QSlider(self)
+        self.volume.setObjectName("volume")
+        self.volume.setGeometry(QRect(487, 180, 80, 100))
+        self.volume.setOrientation(Qt.Orientation.Vertical)
+        self.volume.setRange(0, 100)
+        self.volume.setValue(50)
 
     def set_cover_url(self, url: str):
         """
@@ -120,6 +136,10 @@ class PlayerView(QWidget):
         self.track_name.setText(QCoreApplication.translate("mainWindow", "Track", None))
         self.pause.setText(QCoreApplication.translate("mainWindow", "Play", None))
         self.play.setText(QCoreApplication.translate("mainWindow", "Pause", None))
+        self.forward.setText(QCoreApplication.translate("mainWindow", "Forward", None))
+        self.backward.setText(
+            QCoreApplication.translate("mainWindow", "Backward", None)
+        )
         self.artist_name.setText(
             QCoreApplication.translate("mainWindow", "Artist Name", None)
         )

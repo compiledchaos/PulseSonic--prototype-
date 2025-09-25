@@ -40,14 +40,16 @@ class Playback:
     def pause(self):
         with self.lock:
             if self.player is not None:
-                logger.info("Pausing track")
-                self.player.pause()
+                if self.player.is_playing():
+                    logger.info("Pausing track")
+                    self.player.pause()
 
     def resume(self):
         with self.lock:
             if self.player is not None:
-                logger.info("Resuming track")
-                self.player.pause()  # VLC toggle pause
+                if not self.player.is_playing():
+                    logger.info("Resuming track")
+                    self.player.play()
 
     def stop(self):
         with self.lock:
@@ -55,3 +57,25 @@ class Playback:
                 logger.info("Stopping track")
                 self.player.stop()
                 self.player = None
+
+    def progress(self):
+        with self.lock:
+            if self.player is not None:
+                # logger.info("Getting track progress")
+                return (self.player.get_time() / self.player.get_length()) * 100
+
+    def set_volume(self, volume: int):
+        with self.lock:
+            if self.player is not None:
+                self.player.audio_set_volume(volume)
+
+    def seek_forward(self):
+        with self.lock:
+            if self.player is not None:
+                self.player.set_time(self.player.get_time() + 5000)
+
+    def seek_backward(self):
+        with self.lock:
+            if self.player is not None:
+                if self.player.get_time() > 5000:
+                    self.player.set_time(self.player.get_time() - 5000)
