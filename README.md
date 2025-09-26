@@ -5,17 +5,21 @@ Built with PySide6 UI + Jamendo API backend.
 ## Features
 - Search songs via Jamendo API  
 - Stream audio from Jamendo
+- Play audio locally
 
 ## Future Features
-- Play audio locally
 - Basic AI-powered recommendations  
-- Offline caching (SQLite)
+- Offline downloads (SQLite)
 - Playlists
 - Favourites
 
+## In Progress Features
+- Login/Signup
+- User info caching (SQLite)
+
 ## Tech Stack
 - **UI**: PySide6  
-- **Backend Logic**: Python (requests, SQLite, scikit-learn)  
+- **Backend Logic**: Python (requests, SQLite, scikit-learn, SQLAlchemy)  
 - **Playback**: VLC
 - **Music Data**: Jamendo API  
 
