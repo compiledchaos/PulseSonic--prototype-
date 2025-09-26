@@ -174,6 +174,7 @@ class Ui_mainWindow(object):
         self.recs_button.clicked.connect(self.search_view.hide)
 
         self.login_view.redirect_to_signup.connect(self.signup_view.show)
+        self.signup_view.redirect_to_login_view.connect(self.signup_view.hide)
 
         QMetaObject.connectSlotsByName(mainWindow)
 
