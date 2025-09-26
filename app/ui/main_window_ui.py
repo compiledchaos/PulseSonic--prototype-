@@ -97,6 +97,12 @@ class Ui_mainWindow(object):
         button_font.setBold(False)
         button_font.setItalic(False)
 
+        logout_button_font = QFont()
+        logout_button_font.setFamilies(["Segoe UI"])
+        logout_button_font.setPointSize(10)
+        logout_button_font.setBold(False)
+        logout_button_font.setItalic(False)
+
         # Search button
         self.search_button = QPushButton(self.three_funcs)
         self.search_button.setObjectName("search_button")
@@ -118,6 +124,24 @@ class Ui_mainWindow(object):
         self.recs_button.setFont(button_font)
         self.recs_button.setAutoFillBackground(False)
         self.recs_button.setEnabled(False)
+
+        # Logout button
+        self.logout_button = QPushButton(self.centralwidget)
+        self.logout_button.setObjectName("logout_button")
+        self.logout_button.setGeometry(QRect(500, 0, 50, 25))
+        self.logout_button.setFont(logout_button_font)
+        self.logout_button.setAutoFillBackground(False)
+        self.logout_button.setText("Logout")
+        self.logout_button.clicked.connect(self._on_logout)
+        self.logout_button.show()
+
+        self.delete_account_button = QPushButton(self.centralwidget)
+        self.delete_account_button.setObjectName("delete_account_button")
+        self.delete_account_button.setGeometry(QRect(500, 25, 100, 25))
+        self.delete_account_button.setFont(logout_button_font)
+        self.delete_account_button.setAutoFillBackground(False)
+        self.delete_account_button.setText("Delete Account")
+        self.delete_account_button.show()
 
         # Instantiate modular subviews
         self.search_view = SearchView(self.centralwidget)
@@ -152,6 +176,8 @@ class Ui_mainWindow(object):
         self.search_view.raise_()
         self.app_name.raise_()
         self.three_funcs.raise_()
+        self.logout_button.raise_()
+        self.delete_account_button.raise_()
         self.login_view.raise_()
         self.signup_view.raise_()
         self.menubar = QMenuBar(mainWindow)
@@ -223,3 +249,29 @@ class Ui_mainWindow(object):
                 self.statusbar.showMessage(f"Logged in as {username}", 5000)
         except Exception:
             pass
+
+    def _on_logout(self):
+        self.reset_signup_view()
+        self.reset_login_view()
+
+    def reset_login_view(self):
+        self.login_view.username_input.clear()
+        self.login_view.password_input.clear()
+        self.login_view.signup_button.setText("Sign Up")
+        self.login_view.signup_button.setStyleSheet("clear")
+        self.login_view.username_input.setStyleSheet("clear")
+        self.login_view.password_input.setStyleSheet("clear")
+
+        self.login_view.show()
+        self.signup_view.hide()
+
+    def reset_signup_view(self):
+        self.signup_view.username_input.clear()
+        self.signup_view.password_input.clear()
+        self.signup_view.signup_button.setText("Sign Up")
+        self.signup_view.signup_button.setStyleSheet("clear")
+        self.signup_view.username_input.setStyleSheet("clear")
+        self.signup_view.password_input.setStyleSheet("clear")
+
+        self.signup_view.show()
+        self.login_view.hide()

@@ -5,6 +5,7 @@ from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QWidget, QLabel, QPushButton, QFrame, QLineEdit
 import logging
 from app.core.cache import SessionLocal, User_Info
+from app.utils.user_functions import UserFunctions
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ class Login(QWidget):
         self.setObjectName("login_view")
         self.setEnabled(True)
         self.setAutoFillBackground(True)
+        self.user_functions = UserFunctions()
 
         self.login_credentials = []
 
@@ -80,9 +82,9 @@ class Login(QWidget):
         username = self.username_input.text()
         password = self.password_input.text()
         if username and password:
-            if self.check_user_exists(username):
+            if self.user_functions.check_user_exists(username):
                 self.signup_button.setText("Sign Up")
-                if self.check_password(username, password):
+                if self.user_functions.check_password(username, password):
                     self.login_success.emit(username, password)
                 else:
                     logger.error("Incorrect password")
@@ -99,15 +101,3 @@ class Login(QWidget):
 
     def redirect_to_sign_up(self):
         self.redirect_to_signup.emit()
-
-    def check_user_exists(self, username: str) -> bool:
-        session = SessionLocal()
-        user = session.query(User_Info).filter(User_Info.username == username).first()
-        session.close()
-        return user
-
-    def check_password(self, username: str, password: str) -> bool:
-        session = SessionLocal()
-        user = session.query(User_Info).filter(User_Info.username == username).first()
-        session.close()
-        return user.password == password

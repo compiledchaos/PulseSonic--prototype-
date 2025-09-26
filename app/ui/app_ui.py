@@ -2,43 +2,15 @@ from .main_window_ui import Ui_mainWindow
 from PySide6.QtWidgets import QMainWindow
 from app.services.jamendo_api import JamendoApi
 from PySide6.QtWidgets import QListWidgetItem
-from PySide6.QtCore import Qt, QMetaObject, Q_ARG, QThread, QObject, Signal
-from PySide6.QtCore import Slot
+from PySide6.QtCore import Qt, QMetaObject, Q_ARG, QThread, Slot
 from app.services.playback import Playback
 from app.utils.logger import get_logger
 import json
 from app.core.cache import User_Info, SessionLocal
+from app.ui.utils.progress_bar import ProgressWorker
+from app.utils.user_functions import UserFunctions
 
 logger = get_logger(__name__)
-
-
-class ProgressWorker(QObject):
-    progress = Signal(float)
-
-    def __init__(self, playback):
-        super().__init__()
-        self.playback = playback
-        self._running = True
-
-    @Slot()
-    def run(self):
-        while self._running:
-            try:
-                if (
-                    self.playback.player is not None
-                    and self.playback.player.is_playing()
-                ):
-                    value = self.playback.progress() or 0
-                    # clamp
-                    value = max(0, min(100, value))
-                    self.progress.emit(value)
-            except Exception:
-                pass
-            # Keep sleep outside try so exceptions don't delay stopping
-            QThread.msleep(100)
-
-    def stop(self):
-        self._running = False
 
 
 class AppMainWindow(QMainWindow):
@@ -51,6 +23,7 @@ class AppMainWindow(QMainWindow):
         self._progress_thread = None
         self._progress_worker = None
         self.current_username = None
+        self.user_functions = UserFunctions()
 
         # Wire up signals
         self.ui.search_view.search_b.clicked.connect(self.do_search)
@@ -60,6 +33,7 @@ class AppMainWindow(QMainWindow):
         self.ui.playing_view.volume.valueChanged.connect(self.set_volume)
         self.ui.playing_view.forward.clicked.connect(self.forward)
         self.ui.playing_view.backward.clicked.connect(self.backward)
+        self.ui.delete_account_button.clicked.connect(self._on_delete_account)
 
         self.ui.login_view.login_success.connect(self.on_auth_success)
         self.ui.signup_view.signup_success.connect(self.on_auth_success)
@@ -74,13 +48,10 @@ class AppMainWindow(QMainWindow):
         self.playback.seek_backward()
 
     def do_search(self):
-        logger.info("Current username: %s", self.current_username)
         logger.info("Starting search")
         query = self.ui.search_view.search_bar.text()
         logger.info(f"Searching for: {query}")
-        logger.info("Clearing search results")
         self.jamendo_api.namesearch = query
-        logger.info("Setting search query")
         # Run in background (threaded wrapper)
         self.jamendo_api.get_track_list(callback=self.handle_results)
 
@@ -112,34 +83,6 @@ class AppMainWindow(QMainWindow):
         logger.info(f"Starting playback for track: {self.jamendo_api.track_id}")
         # Fetch track info in background; update UI when ready
         self.jamendo_api.get_track_info(callback=self.on_track_info_ready)
-
-    def update_history(self, track_id: str):
-        if not self.current_username:
-            return
-        session = SessionLocal()
-        try:
-            user = (
-                session.query(User_Info)
-                .filter(User_Info.username == self.current_username)
-                .first()
-            )
-            if not user:
-                return
-            try:
-                existing = json.loads(user.history) if user.history else []
-            except Exception:
-                existing = []
-            if track_id not in existing:
-                existing.append(track_id)
-                user.history = json.dumps(existing)
-                session.commit()
-        finally:
-            session.close()
-
-    @Slot(str, str)
-    def on_auth_success(self, username: str, password: str):
-        self.current_username = username
-        return self.current_username
 
     def on_track_info_ready(self, info):
         # Marshal back to UI thread with a slot
@@ -209,6 +152,34 @@ class AppMainWindow(QMainWindow):
     def update_progress(self, value: float):
         self.ui.playing_view.progressBar.setValue(int(value))
 
+    def update_history(self, track_id: str):
+        if not self.current_username:
+            return
+        session = SessionLocal()
+        try:
+            user = (
+                session.query(User_Info)
+                .filter(User_Info.username == self.current_username)
+                .first()
+            )
+            if not user:
+                return
+            try:
+                existing = json.loads(user.history) if user.history else []
+            except Exception:
+                existing = []
+            if track_id not in existing:
+                existing.append(track_id)
+                user.history = json.dumps(existing)
+                session.commit()
+        finally:
+            session.close()
+
+    @Slot(str, str)
+    def on_auth_success(self, username: str, password: str):
+        self.current_username = username
+        return self.current_username
+
     def closeEvent(self, event):
         """Ensure threads and playback are stopped on window close."""
         try:
@@ -220,3 +191,8 @@ class AppMainWindow(QMainWindow):
         except Exception:
             pass
         super().closeEvent(event)
+
+    def _on_delete_account(self):
+        self.user_functions.delete_user(self.current_username)
+        self.current_username = None
+        self.ui.reset_login_view()
